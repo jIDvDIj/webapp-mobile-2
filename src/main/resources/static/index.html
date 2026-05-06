@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tarefas</title>
+  <style>
+    /* ── Reset & tokens ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #0f0f13;
+      --surface:     #1a1a24;
+      --surface2:    #22222f;
+      --border:      #2e2e3e;
+      --accent:      #7c6ffa;
+      --accent2:     #c084fc;
+      --accent-glow: rgba(124,111,250,.35);
+      --green:       #34d399;
+      --red:         #f87171;
+      --yellow:      #fbbf24;
+      --text:        #e2e2f0;
+      --muted:       #6b6b82;
+      --radius:      14px;
+      --radius-sm:   8px;
+      --shadow:      0 4px 24px rgba(0,0,0,.45);
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Animated gradient header ── */
+    header {
+      width: 100%;
+      padding: 28px 24px 24px;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+    header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% -20%,
+        rgba(124,111,250,.4) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(90deg, #a78bfa, #e879f9, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+    }
+    header p {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-top: 4px;
+      position: relative;
+    }
+    .badge-api {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(52,211,153,.12);
+      border: 1px solid rgba(52,211,153,.3);
+      color: var(--green);
+      border-radius: 99px;
+      padding: 3px 12px;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .5px;
+      margin-top: 12px;
+      position: relative;
+    }
+    .badge-api::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .5; transform: scale(1.3); }
+    }
+
+    /* ── Main layout ── */
+    main {
+      width: 100%;
+      max-width: 580px;
+      padding: 28px 16px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── Stats row ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      text-align: center;
+    }
+    .stat-card .num {
+      font-size: 1.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .stat-card .lbl {
+      font-size: .7rem;
+      color: var(--muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── Card / form ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--accent);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title svg { opacity: .8; }
+
+    label {
+      display: block;
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+    label:first-of-type { margin-top: 0; }
+
+    input, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: .95rem;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      font-family: inherit;
+    }
+    input:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      transition: transform .12s, box-shadow .2s, opacity .2s;
+      white-space: nowrap;
+    }
+    .btn:active { transform: scale(.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #9f7aea);
+      color: #fff;
+      padding: 11px 22px;
+      font-size: .9rem;
+      box-shadow: 0 4px 16px rgba(124,111,250,.4);
+      width: 100%;
+      margin-top: 16px;
+    }
+    .btn-primary:hover { box-shadow: 0 6px 22px rgba(124,111,250,.55); }
+
+    .btn-icon {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 7px 10px;
+      font-size: .82rem;
+    }
+    .btn-icon:hover { color: var(--text); border-color: var(--accent); }
+    .btn-icon.danger:hover { color: var(--red); border-color: var(--red); }
+    .btn-icon.success:hover { color: var(--green); border-color: var(--green); }
+
+    /* ── Search ── */
+    .search-wrap {
+      position: relative;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .search-wrap input { padding-left: 38px; }
+
+    /* ── Task list ── */
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .list-header .card-title { margin-bottom: 0; }
+
+    #task-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* ── Task item ── */
+    .task-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: border-color .2s, box-shadow .2s;
+      animation: slideIn .25s ease both;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .task-item:hover {
+      border-color: rgba(124,111,250,.4);
+      box-shadow: 0 2px 14px rgba(124,111,250,.15);
+    }
+    .task-item.done {
+      opacity: .5;
+    }
+    .task-item.done .task-title { text-decoration: line-through; }
+
+    .task-check {
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s, border-color .2s;
+    }
+    .task-check:hover { border-color: var(--green); }
+    .task-item.done .task-check {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .task-check svg { display: none; }
+    .task-item.done .task-check svg { display: block; }
+
+    .task-body { flex: 1; min-width: 0; }
+    .task-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .task-id {
+      font-size: .68rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: monospace;
+    }
+    .task-title {
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-desc {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1.45;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* ── Edit inline ── */
+    .task-item.editing { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
+    .edit-fields { display: none; flex-direction: column; gap: 8px; margin-top: 10px; }
+    .task-item.editing .edit-fields { display: flex; }
+    .task-item.editing .task-meta,
+    .task-item.editing .task-title,
+    .task-item.editing .task-desc { display: none; }
+    .edit-fields input, .edit-fields textarea {
+      font-size: .88rem;
+      padding: 8px 10px;
+    }
+    .edit-fields textarea { min-height: 60px; }
+    .edit-row {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-save {
+      background: linear-gradient(135deg, var(--accent), #9f7aea);
+      color: #fff;
+      padding: 7px 14px;
+      font-size: .8rem;
+      flex: 1;
+    }
+    .btn-cancel {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 7px 14px;
+      font-size: .8rem;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+    .empty-state svg {
+      opacity: .3;
+      margin-bottom: 12px;
+    }
+    .empty-state p { font-size: .9rem; }
+
+    /* ── Toast ── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 999;
+      pointer-events: none;
+      width: min(380px, 90vw);
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: .85rem;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn .3s ease both;
+      border-left: 3px solid var(--accent);
+    }
+    .toast.ok   { border-left-color: var(--green); }
+    .toast.err  { border-left-color: var(--red); }
+    .toast.warn { border-left-color: var(--yellow); }
+    .toast.out  { animation: toastOut .3s ease forwards; }
+    @keyframes toastIn  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(8px); } }
+
+    /* ── Loading spinner ── */
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 420px) {
+      header h1 { font-size: 1.6rem; }
+      .stats { grid-template-columns: repeat(3,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>✦ Tarefas</h1>
+  <p>Gerenciador de produtividade</p>
+  <div class="badge-api" id="api-status">API conectada</div>
+</header>
+
+<main>
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="num" id="stat-total">0</div>
+      <div class="lbl">Total</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="stat-done" style="background:linear-gradient(135deg,#34d399,#059669);-webkit-background-clip:text;background-clip:text;">0</div>
+      <div class="lbl">Concluídas</div>
+    </div>
+    <div class="stat-card">
+      <div class="num" id="stat-pending" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;background-clip:text;">0</div>
+      <div class="lbl">Pendentes</div>
+    </div>
+  </div>
+
+  <!-- Add task form -->
+  <div class="card">
+    <div class="card-title">
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
+      </svg>
+      Nova Tarefa
+    </div>
+    <label for="new-titulo">Título</label>
+    <input id="new-titulo" type="text" placeholder="O que precisa ser feito?" autocomplete="off" />
+    <label for="new-desc">Descrição</label>
+    <textarea id="new-desc" placeholder="Detalhes opcionais..."></textarea>
+    <button class="btn btn-primary" id="btn-add">
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
+      </svg>
+      Adicionar Tarefa
+    </button>
+  </div>
+
+  <!-- Task list -->
+  <div class="card">
+    <div class="list-header">
+      <div class="card-title">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M2.5 3a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11zm0 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1h-6zm0 3a.5.5 0 0 0 0 1h6a.5.5 0 0 0 0-1h-6zm0 3a.5.5 0 0 0 0 1h11a.5.5 0 0 0 0-1h-11z"/>
+        </svg>
+        Minhas Tarefas
+      </div>
+      <button class="btn btn-icon" id="btn-refresh" title="Atualizar lista">
+        <svg width="13" height="13" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap" style="margin-bottom:14px;">
+      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.099zm-5.242 1.656a5.5 5.5 0 1 1 0-11 5.5 5.5 0 0 1 0 11z"/>
+      </svg>
+      <input id="search" type="search" placeholder="Buscar tarefas..." />
+    </div>
+
+    <div id="task-list">
+      <!-- Tasks injected here -->
+    </div>
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<script>
+  const API = '/tarefas';
+
+  /* ── Local "done" state (API has no done field) ── */
+  const doneSet = new Set(JSON.parse(localStorage.getItem('done') || '[]'));
+  const saveDone = () => localStorage.setItem('done', JSON.stringify([...doneSet]));
+
+  /* ── State ── */
+  let tasks = [];
+  let searchQuery = '';
+
+  /* ── Toast ── */
+  function toast(msg, type = 'ok') {
+    const c = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    const icons = { ok: '✓', err: '✕', warn: '⚠' };
+    el.innerHTML = `<span style="font-weight:700;color:${type==='ok'?'var(--green)':type==='err'?'var(--red)':'var(--yellow)'}">${icons[type]||'•'}</span> ${msg}`;
+    c.appendChild(el);
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 320); }, 3000);
+  }
+
+  /* ── API helpers ── */
+  async function apiFetch(path, opts = {}) {
+    const r = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    if (r.status === 204) return null;
+    return r.json().catch(() => null);
+  }
+
+  /* ── Load tasks ── */
+  async function loadTasks() {
+    try {
+      tasks = await apiFetch('') || [];
+      renderList();
+      updateStats();
+    } catch {
+      toast('Não foi possível conectar à API', 'err');
+      document.getElementById('api-status').textContent = 'API offline';
+      document.getElementById('api-status').style.cssText =
+        'background:rgba(248,113,113,.12);border-color:rgba(248,113,113,.3);color:var(--red)';
+    }
+  }
+
+  /* ── Stats ── */
+  function updateStats() {
+    const total = tasks.length;
+    const done  = tasks.filter(t => doneSet.has(t.id)).length;
+    document.getElementById('stat-total').textContent   = total;
+    document.getElementById('stat-done').textContent    = done;
+    document.getElementById('stat-pending').textContent = total - done;
+  }
+
+  /* ── Render list ── */
+  function renderList() {
+    const list = document.getElementById('task-list');
+    const q = searchQuery.trim().toLowerCase();
+    const filtered = q
+      ? tasks.filter(t =>
+          t.titulo.toLowerCase().includes(q) ||
+          t.descricao.toLowerCase().includes(q))
+      : tasks;
+
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5.5 2A3.5 3.5 0 0 0 2 5.5v5A3.5 3.5 0 0 0 5.5 14h5a3.5 3.5 0 0 0 3.5-3.5V8a.5.5 0 0 1 1 0v2.5a4.5 4.5 0 0 1-4.5 4.5h-5A4.5 4.5 0 0 1 1 10.5v-5A4.5 4.5 0 0 1 5.5 1H8a.5.5 0 0 1 0 1H5.5z"/>
+            <path d="M16 3a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+          </svg>
+          <p>${q ? 'Nenhuma tarefa encontrada.' : 'Nenhuma tarefa ainda.<br>Crie sua primeira acima!'}</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = '';
+    filtered.forEach(t => list.appendChild(buildItem(t)));
+  }
+
+  /* ── Build task DOM ── */
+  function buildItem(t) {
+    const done = doneSet.has(t.id);
+    const el = document.createElement('div');
+    el.className = `task-item${done ? ' done' : ''}`;
+    el.dataset.id = t.id;
+    el.innerHTML = `
+      <button class="task-check btn" title="Marcar como concluída" onclick="toggleDone(${t.id})">
+        <svg width="10" height="10" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+        </svg>
+      </button>
+      <div class="task-body">
+        <div class="task-meta">
+          <span class="task-id">#${t.id}</span>
+        </div>
+        <div class="task-title">${esc(t.titulo)}</div>
+        <div class="task-desc">${esc(t.descricao) || '<em style="opacity:.5">Sem descrição</em>'}</div>
+        <div class="edit-fields">
+          <input class="edit-titulo" type="text" value="${esc(t.titulo)}" placeholder="Título" />
+          <textarea class="edit-desc" placeholder="Descrição">${esc(t.descricao)}</textarea>
+          <div class="edit-row">
+            <button class="btn btn-save" onclick="saveEdit(${t.id})">Salvar</button>
+            <button class="btn btn-cancel" onclick="cancelEdit(${t.id})">Cancelar</button>
+          </div>
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="btn btn-icon success" title="Editar" onclick="startEdit(${t.id})">
+          <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+          </svg>
+        </button>
+        <button class="btn btn-icon danger" title="Excluir" onclick="deleteTask(${t.id})">
+          <svg width="12" height="12" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+          </svg>
+        </button>
+      </div>`;
+    return el;
+  }
+
+  function esc(s = '') {
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  /* ── Add task ── */
+  document.getElementById('btn-add').addEventListener('click', async () => {
+    const titulo = document.getElementById('new-titulo').value.trim();
+    const descricao = document.getElementById('new-desc').value.trim();
+    if (!titulo) { toast('Insira um título para a tarefa', 'warn'); return; }
+
+    const btn = document.getElementById('btn-add');
+    btn.innerHTML = '<span class="spinner"></span> Criando...';
+    btn.disabled = true;
+
+    try {
+      await apiFetch('', { method: 'POST', body: JSON.stringify({ titulo, descricao }) });
+      document.getElementById('new-titulo').value = '';
+      document.getElementById('new-desc').value = '';
+      await loadTasks();
+      toast('Tarefa criada com sucesso!');
+    } catch {
+      toast('Erro ao criar tarefa', 'err');
+    } finally {
+      btn.innerHTML = `<svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/></svg>
+        Adicionar Tarefa`;
+      btn.disabled = false;
+    }
+  });
+
+  /* ── Enter to submit ── */
+  document.getElementById('new-titulo').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('btn-add').click();
+  });
+
+  /* ── Delete ── */
+  async function deleteTask(id) {
+    try {
+      await apiFetch(`/${id}`, { method: 'DELETE' });
+      doneSet.delete(id); saveDone();
+      await loadTasks();
+      toast('Tarefa removida');
+    } catch {
+      toast('Erro ao remover tarefa', 'err');
+    }
+  }
+
+  /* ── Toggle done (local) ── */
+  function toggleDone(id) {
+    if (doneSet.has(id)) doneSet.delete(id);
+    else doneSet.add(id);
+    saveDone();
+    renderList();
+    updateStats();
+  }
+
+  /* ── Inline edit ── */
+  function startEdit(id) {
+    const el = document.querySelector(`.task-item[data-id="${id}"]`);
+    el.classList.add('editing');
+  }
+  function cancelEdit(id) {
+    const el = document.querySelector(`.task-item[data-id="${id}"]`);
+    el.classList.remove('editing');
+  }
+  async function saveEdit(id) {
+    const el = document.querySelector(`.task-item[data-id="${id}"]`);
+    const titulo   = el.querySelector('.edit-titulo').value.trim();
+    const descricao = el.querySelector('.edit-desc').value.trim();
+    if (!titulo) { toast('Título não pode estar vazio', 'warn'); return; }
+    try {
+      await apiFetch(`/${id}`, { method: 'PUT', body: JSON.stringify({ titulo, descricao }) });
+      await loadTasks();
+      toast('Tarefa atualizada!');
+    } catch {
+      toast('Erro ao atualizar tarefa', 'err');
+    }
+  }
+
+  /* ── Search ── */
+  document.getElementById('search').addEventListener('input', e => {
+    searchQuery = e.target.value;
+    renderList();
+  });
+
+  /* ── Refresh ── */
+  document.getElementById('btn-refresh').addEventListener('click', () => {
+    loadTasks().then(() => toast('Lista atualizada'));
+  });
+
+  /* ── Init ── */
+  loadTasks();
+</script>
+</body>
+</html>
